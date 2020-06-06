@@ -1,0 +1,95 @@
+<html>
+
+  <head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+  </head>
+
+  <body>
+    <script>
+      const textMeshCreator = (font, text, size) => {
+        /**
+          Create text mesh
+        */
+        let textGeometry = new THREE.TextGeometry(text, {
+          font: font,
+          size: size,
+          height: size / 10,
+          curveSegments: size * 10,
+        });
+        let textMaterial = new THREE.MeshPhongMaterial(
+          { color: 0xff0000, specular: 0xffffff }
+        );
+        return new THREE.Mesh(textGeometry, textMaterial);
+      };
+
+      /**
+        Create plane mesh
+      */
+      const planeMeshCreator = (dimensions) => {
+        let planeGeometry = new THREE.PlaneGeometry(dimensions.width * 1.2, dimensions.height * 2, 0);
+        let planeMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+        return new THREE.Mesh(planeGeometry, planeMaterial);
+      };
+
+      /** 
+        Calculate dimensions of text
+      */
+      const getTextDimension = (text) => {
+        let textSize = new THREE.Box3().setFromObject(text);
+        return {
+          width: textSize.getSize().x,
+          height: textSize.getSize().y
+        }
+      }
+
+      AFRAME.registerComponent('label', {
+        schema: {
+          text: { type: 'string', default: 'Bazinga!' },
+          textColor: { type: 'string', default: '#000000' },
+          bgColor: { type: 'string', default: null },
+          size: { type: 'number', default: 0.3 }
+        },
+        init: function () {
+          const data = this.data;
+          const { text, size, textColor, bgColor } = data;
+          const el = this.el;
+          var loader = new THREE.FontLoader();
+          loader.load('../fonts/helvetiker_regular.typeface.json', function (font) {
+            let textMesh = textMeshCreator(font, text, size);
+            let dimensions = getTextDimension(textMesh);
+            let planeMesh = planeMeshCreator(dimensions);
+
+            textMesh.position.x = 0 - dimensions.width / 2;
+            textMesh.position.y = 0 - dimensions.height / 3;
+            textMesh.material.color = new THREE.Color(data.textColor);
+            textMesh.material.needsUpdate = true;
+
+            var group = new THREE.Group();
+            
+            group.add(textMesh);
+
+            if (bgColor) {
+              let plane = planeMeshCreator(dimensions);
+              plane.material.color = new THREE.Color(data.bgColor);
+              plane.material.needsUpdate = true;
+              group.add(plane);
+            }
+
+            el.setObject3D('mesh', group);
+          });
+        }
+      });
+    </script>
+    <a-scene>
+      <!-- 
+        Parameters for label component
+        text: text to be displayed inside label. Default value: Bazinga!
+        textColor: color of text. Default value: #000000
+        size: size of the text. Default value; 0.3
+        bgColor: (OPTIONAL) - background color of label
+      -->
+      <a-entity label="text: Sample text; textColor: #3f51b5; bgColor: #d1d8d5; size: 0.3" position="0 0 -4"></a-entity>
+    </a-scene>
+  </body>
+
+</html>
